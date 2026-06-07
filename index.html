@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NBHC RST Weight Management System</title>
+<style>
+    :root {
+        --primary: #0d6efd;
+        --primary-hover: #0b5ed7;
+        --bg-color: #ffffff;
+        --card-bg: #f8f9fa;
+        --border-color: #dee2e6;
+        --text-main: #212529;
+        --text-muted: #6c757d;
+    }
+    
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: var(--bg-color);
+        color: var(--text-main);
+        margin: 0;
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: auto;
+    }
+
+    /* Modern Header */
+    .header {
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+        background: var(--card-bg);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .header img { height: 80px; margin-bottom: 10px; }
+    .header h2 { margin: 5px 0; color: #000; font-weight: 700; font-size: 24px; }
+    .header h3 { margin: 5px 0; color: var(--text-muted); font-size: 18px; font-weight: 500; }
+    .header-details {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 15px;
+        font-weight: 500;
+    }
+
+    /* Dashboard Grid */
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .card {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-2px); }
+    .card span { display: block; font-size: 14px; color: var(--text-muted); margin-bottom: 5px; }
+    .card b { font-size: 22px; color: var(--primary); }
+
+    /* Entry Boxes */
+    .box {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .box h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;}
+    .input-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        align-items: end;
+    }
+    .input-field { display: flex; flex-direction: column; }
+    .input-field label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+    
+    input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(13,110,253,0.1); }
+    input[readonly] { background: #e9ecef; cursor: not-allowed; }
+
+    button {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 15px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        height: 40px;
+    }
+    button:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #6c757d; }
+    .btn-secondary:hover { background: #5c636a; }
+    .btn-success { background: #198754; }
+    .btn-success:hover { background: #157347; }
+    .btn-sm { height: 30px; padding: 5px 10px; font-size: 12px; margin: 2px; }
+
+    /* Action Bar */
+    .action-bar { display: flex; gap: 10px; margin-bottom: 15px; }
+    .action-bar input { max-width: 300px; }
+
+    /* Table */
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+    th, td { border: 1px solid var(--border-color); padding: 10px; text-align: center; }
+    th { background: #f1f3f5; font-weight: 600; color: var(--text-main); }
+    tbody tr:hover { background: #f8f9fa; }
+    .status-pending { color: #dc3545; font-weight: bold; }
+    .status-received { color: #198754; font-weight: bold; }
+
+    /* Print Views */
+    #print-slip-view, #today-report-view { display: none; }
+
+    /* Printing Logic */
+    @media print {
+        @page { margin: 8mm; }
+        .noprint { display: none !important; }
+        body { padding: 0; background: #fff; }
+        .container { max-width: 100%; margin: 0; }
+        
+        /* A4 Report View (Default) */
+        @page { size: A4 landscape; }
+        body.printing-report .header, body.printing-report .box table { display: table; width: 100%; }
+        
+        /* Print Slip View */
+        body.printing-slip #main-view { display: none !important; }
+        body.printing-slip #print-slip-view { display: block; }
+        body.printing-slip { margin: 0; }
+        @page :blank { size: A4 portrait; }
+
+        /* Today Report View */
+        body.printing-today #main-view { display: none !important; }
+        body.printing-today #today-report-view { display: block; }
+        @page :blank { size: A4 portrait; }
+
+        /* Report Title / Footers */
+        .print-only-title { display: block !important; text-align: center; font-size: 20px; font-weight: bold; margin: 15px 0; text-decoration: underline; }
+        .print-footer { display: block !important; margin-top: 40px; text-align: center; font-size: 12px; font-weight: bold; color: #555; border-top: 1px solid #ccc; padding-top: 10px; }
+    }
+
+    .print-only-title, .print-footer { display: none; }
+
+    /* Slip Styling */
+    .slip-container {
+        border: 2px solid #000;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 800px;
+    }
+    .slip-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+    .slip-header img { height: 70px; }
+    .slip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 16px; margin-bottom: 20px;}
+    .slip-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #ccc; padding: 8px 0; }
+    .slip-row strong { color: #333; }
+</style>
+</head>
+<body>
+
+<!-- MAIN DASHBOARD & ENTRY SYSTEM -->
+<div id="main-view" class="container">
+    <div class="header">
+        <img src="https://i.ibb.co/svf7T4Kq/nbhclogo.png" alt="NBHC Logo">
+        <h2>National Bulk Handling Corporation (India) Private Limited</h2>
+        <h3>RST Weight Management System</h3>
+        <div class="header-details">
+            <span><strong>Client Name :</strong> SHIV SAKTI TRADERS</span>
+            <span><strong>Location :</strong> Sakraili, Bihar</span>
+            <span><strong>Date :</strong> <span id="today"></span></span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card"><span>Total Vehicle</span><b id="t1">0</b></div>
+        <div class="card"><span>Total Gross (Kg)</span><b id="t2">0</b></div>
+        <div class="card"><span>Total Tare (Kg)</span><b id="t3">0</b></div>
+        <div class="card"><span>Total Net (Kg)</span><b id="t4">0</b></div>
+        <div class="card"><span>Total Bags</span><b id="t5">0</b></div>
+        <div class="card"><span>Reject Bags</span><b id="t6">0</b></div>
+        <div class="card"><span>Accept Bags</span><b id="t7">0</b></div>
+    </div>
+
+    <div class="box noprint">
+        <h3>First Weight Entry</h3>
+        <div class="input-group">
+            <div class="input-field"><label>RST Number</label><input id="rst" type="tel" placeholder="Enter RST"></div>
+            <div class="input-field"><label>Vehicle Number</label><input id="vehicle" placeholder="Enter Vehicle No" oninput="this.value=this.value.toUpperCase()"></div>
+            <div class="input-field"><label>Gross Weight (Kg)</label><input id="gross" type="number" placeholder="Enter Gross Weight"></div>
+            <div class="input-field"><label>Total Bags</label><input id="bags" type="number" placeholder="Enter Total Bags"></div>
+            <button onclick="saveFirst()" style="height: 40px; margin-bottom: 2px;">Save First Weight</button>
+        </div>
+    </div>
+
+    <div class="box noprint">
+        <h3>Final Weight Entry</h3>
+        <div class="input-group" style="margin-bottom: 15px;">
+            <div class="input-field"><label>Search RST</label><input id="srst" type="tel" placeholder="Enter RST to fetch"></div>
+            <button onclick="loadRST()" class="btn-secondary">Fetch Data</button>
+        </div>
+        <div class="input-group">
+            <div class="input-field"><label>Vehicle Number</label><input id="fvehicle" readonly placeholder="Auto Fill"></div>
+            <div class="input-field"><label>Gross Weight</label><input id="fgross" readonly placeholder="Auto Fill"></div>
+            <div class="input-field"><label>Total Bags</label><input id="fbags" readonly placeholder="Auto Fill"></div>
+            <div class="input-field"><label>Tare Weight (Kg)</label><input id="tare" type="number" placeholder="Enter Tare" oninput="calc()"></div>
+            <div class="input-field"><label>Reject Bags</label><input id="reject" type="number" placeholder="Enter Rejects" oninput="calc()"></div>
+            <div class="input-field"><label>Net Weight (Kg)</label><input id="net" readonly placeholder="Auto Calc"></div>
+            <div class="input-field"><label>Accept Bags</label><input id="accept" readonly placeholder="Auto Calc"></div>
+            <button onclick="saveFinal()" class="btn-success">Save Final / Received</button>
+        </div>
+    </div>
+
+    <div class="box">
+        <h3 class="noprint">Report & Records</h3>
+        <div class="action-bar noprint">
+            <input id="search" placeholder="Search records..." onkeyup="render()">
+            <button onclick="exportCSV()" class="btn-secondary">Excel Export</button>
+            <button onclick="printA4Report()">A4 Report Print</button>
+            <button onclick="printTodayReport()" class="btn-success">Today Report PDF</button>
+        </div>
+        
+        <div class="print-only-title">NBHC DAILY ENTRY REPORT</div>
+        
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sr</th><th>RST</th><th>Vehicle</th><th>Gross</th><th>Tare</th><th>Net</th>
+                        <th>Total Bags</th><th>Reject Bags</th><th>Accept Bags</th><th>Status</th>
+                        <th>First Time</th><th>Final Time</th><th class="noprint">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tb"></tbody>
+            </table>
+        </div>
+        <div class="print-footer">Generated By NBHC RST Weight Management System</div>
+    </div>
+</div>
+
+<!-- INDIVIDUAL PRINT SLIP VIEW (A4 Portrait) -->
+<div id="print-slip-view" class="container">
+    <div class="slip-container">
+        <div class="slip-header">
+            <img src="https://i.ibb.co/svf7T4Kq/nbhclogo.png" alt="NBHC Logo">
+            <h2>National Bulk Handling Corporation (India) Private Limited</h2>
+            <h3>Weight Slip</h3>
+            <p style="margin:5px 0;"><strong>Client Name:</strong> SHIV SAKTI TRADERS | <strong>Location:</strong> Sakraili, Bihar</p>
+        </div>
+        <div class="slip-grid">
+            <div>
+                <div class="slip-row"><span>RST Number:</span> <strong id="slip-rst"></strong></div>
+                <div class="slip-row"><span>Vehicle Number:</span> <strong id="slip-veh"></strong></div>
+                <div class="slip-row"><span>Status:</span> <strong id="slip-status"></strong></div>
+                <div class="slip-row"><span>First Weight Time:</span> <strong id="slip-time1"></strong></div>
+                <div class="slip-row"><span>Final Weight Time:</span> <strong id="slip-time2"></strong></div>
+            </div>
+            <div>
+                <div class="slip-row"><span>Gross Weight:</span> <strong id="slip-gw"></strong> Kg</div>
+                <div class="slip-row"><span>Tare Weight:</span> <strong id="slip-tw"></strong> Kg</div>
+                <div class="slip-row"><span>Net Weight:</span> <strong id="slip-nw"></strong> Kg</div>
+                <div class="slip-row" style="margin-top:15px;"><span>Total Bags:</span> <strong id="slip-tb"></strong></div>
+                <div class="slip-row"><span>Reject Bags:</span> <strong id="slip-rb"></strong></div>
+                <div class="slip-row"><span>Accept Bags:</span> <strong id="slip-ab"></strong></div>
+            </div>
+        </div>
+        <div class="print-footer">Generated By NBHC RST Weight Management System</div>
+    </div>
+</div>
+
+<!-- TODAY REPORT SUMMARY VIEW (A4 Portrait) -->
+<div id="today-report-view" class="container">
+    <div class="slip-container">
+        <div class="slip-header">
+            <img src="https://i.ibb.co/svf7T4Kq/nbhclogo.png" alt="NBHC Logo">
+            <h2>National Bulk Handling Corporation (India) Private Limited</h2>
+            <h3>NBHC DAILY ENTRY REPORT - SUMMARY</h3>
+            <p style="margin:5px 0;"><strong>Client Name:</strong> SHIV SAKTI TRADERS | <strong>Location:</strong> Sakraili, Bihar</p>
+            <p style="margin:5px 0;"><strong>Date:</strong> <span id="today-print"></span></p>
+        </div>
+        <h3 style="text-align: center; text-decoration: underline;">Today Summary</h3>
+        <div style="font-size: 18px; line-height: 2;">
+            <div class="slip-row"><span>Total Vehicle:</span> <strong id="rep-v"></strong></div>
+            <div class="slip-row"><span>Total Gross Weight:</span> <strong id="rep-gw"></strong> Kg</div>
+            <div class="slip-row"><span>Total Tare Weight:</span> <strong id="rep-tw"></strong> Kg</div>
+            <div class="slip-row"><span>Total Net Weight:</span> <strong id="rep-nw"></strong> Kg</div>
+            <div class="slip-row" style="margin-top:15px;"><span>Total Bags:</span> <strong id="rep-tb"></strong></div>
+            <div class="slip-row"><span>Total Reject Bags:</span> <strong id="rep-rb"></strong></div>
+            <div class="slip-row"><span>Total Accept Bags:</span> <strong id="rep-ab"></strong></div>
+        </div>
+        <div class="print-footer">Generated By NBHC RST Weight Management System</div>
+    </div>
+</div>
+
+<script>
+// Date Formatting
+function ddmmyyyy(){
+    let d = new Date();
+    let p = n => String(n).padStart(2, '0');
+    return p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear();
+}
+document.getElementById('today').innerText = ddmmyyyy();
+document.getElementById('today-print').innerText = ddmmyyyy();
+
+// Database initialization
+let db = JSON.parse(localStorage.getItem("nbhc_rst_db") || "[]");
+let current = null;
+
+function saveDB(){
+    localStorage.setItem("nbhc_rst_db", JSON.stringify(db));
+    render();
+}
+
+function nextSr(){ return String(db.length + 1).padStart(6, "0"); }
+
+function saveFirst(){
+    let r = rst.value.trim();
+    if(!r) return alert("Enter RST Number");
+    if(db.find(x => x.rst === r)) return alert("RST Already Exists");
+
+    db.push({
+        sr: nextSr(), rst: r,
+        vehicle: vehicle.value.toUpperCase(),
+        gross: +gross.value || 0,
+        tare: 0, net: 0,
+        totalBag: +bags.value || 0,
+        reject: 0, accept: 0,
+        firstTime: new Date().toLocaleString(),
+        finalTime: "",
+        status: "Pending"
+    });
+    saveDB();
+    rst.value = vehicle.value = gross.value = bags.value = "";
+    alert("First Weight Saved Successfully");
+}
+
+function loadRST(){
+    current = db.find(x => x.rst === srst.value.trim());
+    if(!current) return alert("RST Not Found");
+
+    fvehicle.value = current.vehicle;
+    fgross.value = current.gross;
+    fbags.value = current.totalBag;
+    tare.value = current.tare || "";
+    reject.value = current.reject || "";
+    calc();
+}
+
+function calc(){
+    if(!current) return;
+    net.value = Math.max(0, current.gross - (+tare.value || 0));
+    accept.value = Math.max(0, current.totalBag - (+reject.value || 0));
+}
+
+function saveFinal(){
+    if(!current) return alert("Fetch RST Data First");
+    current.tare = +tare.value || 0;
+    current.net = +net.value || 0;
+    current.reject = +reject.value || 0;
+    current.accept = +accept.value || 0;
+    current.finalTime = new Date().toLocaleString();
+    current.status = "Received";
+    saveDB();
+    srst.value = fvehicle.value = fgross.value = fbags.value = tare.value = reject.value = net.value = accept.value = "";
+    current = null;
+    alert("Final Weight / Received Status Saved");
+}
+
+function exportCSV(){
+    let csv = "SR,RST,Vehicle,Gross,Tare,Net,TotalBag,Reject,Accept,Status,FirstTime,FinalTime\n";
+    db.forEach(x => csv += `${x.sr},${x.rst},${x.vehicle},${x.gross},${x.tare},${x.net},${x.totalBag},${x.reject},${x.accept},${x.status},"${x.firstTime}","${x.finalTime}"\n`);
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], {type: "text/csv"}));
+    a.download = "NBHC_Entry_Report_" + ddmmyyyy() + ".csv";
+    a.click();
+}
+
+// Print Handlers
+function printA4Report() {
+    document.body.className = "printing-report";
+    window.print();
+    document.body.className = "";
+}
+
+function triggerPrintSlip(rstNum) {
+    let rec = db.find(x => x.rst === rstNum);
+    if(!rec) return;
+    
+    document.getElementById('slip-rst').innerText = rec.rst;
+    document.getElementById('slip-veh').innerText = rec.vehicle;
+    document.getElementById('slip-status').innerText = rec.status;
+    document.getElementById('slip-time1').innerText = rec.firstTime;
+    document.getElementById('slip-time2').innerText = rec.finalTime || "-";
+    
+    document.getElementById('slip-gw').innerText = rec.gross;
+    document.getElementById('slip-tw').innerText = rec.tare;
+    document.getElementById('slip-nw').innerText = rec.net;
+    document.getElementById('slip-tb').innerText = rec.totalBag;
+    document.getElementById('slip-rb').innerText = rec.reject;
+    document.getElementById('slip-ab').innerText = rec.accept;
+
+    document.body.className = "printing-slip";
+    window.print();
+    document.body.className = "";
+}
+
+function printTodayReport() {
+    // Populate Today Summary Data
+    let v=0, gw=0, tw=0, nw=0, tb=0, rb=0, ab=0;
+    db.forEach(x => {
+        v++;
+        gw += Number(x.gross || 0);
+        tw += Number(x.tare || 0);
+        nw += Number(x.net || 0);
+        tb += Number(x.totalBag || 0);
+        rb += Number(x.reject || 0);
+        ab += Number(x.accept || 0);
+    });
+
+    document.getElementById('rep-v').innerText = v;
+    document.getElementById('rep-gw').innerText = gw;
+    document.getElementById('rep-tw').innerText = tw;
+    document.getElementById('rep-nw').innerText = nw;
+    document.getElementById('rep-tb').innerText = tb;
+    document.getElementById('rep-rb').innerText = rb;
+    document.getElementById('rep-ab').innerText = ab;
+
+    document.body.className = "printing-today";
+    // Prompting to use "Save as PDF" functionality of the browser print dialog
+    setTimeout(() => {
+        window.print();
+        document.body.className = "";
+    }, 100);
+}
+
+function render(){
+    let q = (document.getElementById('search')?.value || "").toLowerCase();
+    let tbody = document.getElementById('tb');
+    tbody.innerHTML = "";
+    
+    let v=0, gw=0, tw=0, nw=0, tb_total=0, rb=0, ab=0;
+
+    db.forEach(x => {
+        v++;
+        gw += Number(x.gross || 0);
+        tw += Number(x.tare || 0);
+        nw += Number(x.net || 0);
+        tb_total += Number(x.totalBag || 0);
+        rb += Number(x.reject || 0);
+        ab += Number(x.accept || 0);
+
+        if(q && !JSON.stringify(x).toLowerCase().includes(q)) return;
+        
+        let statusClass = x.status === "Pending" ? "status-pending" : "status-received";
+
+        tbody.innerHTML += `<tr>
+            <td>${x.sr}</td>
+            <td><strong>${x.rst}</strong></td>
+            <td>${x.vehicle}</td>
+            <td>${x.gross}</td>
+            <td>${x.tare}</td>
+            <td>${x.net}</td>
+            <td>${x.totalBag}</td>
+            <td>${x.reject}</td>
+            <td>${x.accept}</td>
+            <td class="${statusClass}">${x.status}</td>
+            <td style="font-size:11px;">${x.firstTime}</td>
+            <td style="font-size:11px;">${x.finalTime}</td>
+            <td class="noprint">
+                <button class="btn-sm" onclick="triggerPrintSlip('${x.rst}')">Print Slip</button>
+            </td>
+        </tr>`;
+    });
+
+    document.getElementById('t1').innerText = v;
+    document.getElementById('t2').innerText = gw;
+    document.getElementById('t3').innerText = tw;
+    document.getElementById('t4').innerText = nw;
+    document.getElementById('t5').innerText = tb_total;
+    document.getElementById('t6').innerText = rb;
+    document.getElementById('t7').innerText = ab;
+}
+render();
+</script>
+</body>
+</html>
